@@ -1,14 +1,32 @@
 class ReactiveEffect {
-    private _fn: any
+    private _fn: Function
+    public deps: any[] = []
+    private active = true
 
-    constructor(fn) {
+    constructor(
+        fn: Function,
+        private scheduler?: Function | undefined
+    ) {
         this._fn = fn
     }
 
     run() {
         activeEffect = this
-        this._fn()
+        return this._fn()
     }
+
+    stop() {
+        if (this.active) {
+            clearEffect(this)
+            this.active = false
+        }
+    }
+}
+
+function clearEffect(effect) {
+    effect.deps.forEach((dep: any) => {
+        dep.delete(effect)
+    })
 }
 
 /**
@@ -41,7 +59,9 @@ export function track(target, key) {
     }
 
     dep.add(activeEffect)
+    activeEffect?.deps?.push(dep)
 }
+
 
 /**
  * 用于触发依赖
@@ -55,9 +75,12 @@ export function trigger(target, key) {
     let dep = depsMap.get(key)
 
     for (const effect of dep) {
-        effect.run()
+        if (effect.scheduler) {
+            effect.scheduler()
+        } else {
+            effect.run()
+        }
     }
-    // return true
 }
 
 /**
@@ -69,8 +92,22 @@ export function trigger(target, key) {
  * @param fn   副作用函数
  */
 let activeEffect
-export function effect(fn) {
-    const _effect = new ReactiveEffect(fn)
+export function effect(fn, options: any = {}) {
+    const _effect = new ReactiveEffect(fn, options.scheduler)
 
     _effect.run()
+
+    const runner: any = _effect.run.bind(_effect)
+
+    runner.effect = _effect
+
+    return runner
+}
+
+/**
+ * 停止副作用函数的执行
+ * @param runner    副作用函数
+ */
+export function stop(runner) {
+    runner.effect.stop()
 }
