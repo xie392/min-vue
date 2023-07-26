@@ -1,37 +1,32 @@
-import { track, trigger } from './effect'
+import { mutableHandlers, readonlyHandlers,shallowReadonlyHandlers } from './baerHandler'
+
+export enum ReactiveFlags {
+    IS_REACTIVE = '__v_isReactive',
+    IS_READONLY = '__v_isReadonly'
+}
 
 export function reactive(target) {
-    return new Proxy(target, {
-        /**
-         * get 方法是一个捕获器，用于拦截对目标对象属性的访问请求
-         * @param target    目标对象
-         * @param key       目标对象的属性
-         * @example
-         * { foo: 1 }  target = { foo: 1 }  key = 'foo'
-         */
-        get(target, key) {
-            // Reflect.get() 方法基本等同于 target[key]， 用于获取对象的属性值
-            const res = Reflect.get(target, key)
-            
-            // 依赖收集: 将副作用函数和响应式数据关联起来
-            track(target, key)
-            return res
-        },
-        /**
-         * set 方法是一个捕获器，用于拦截对目标对象属性的设置请求
-         * @param target    目标对象
-         * @param key       目标对象的属性
-         * @param value     目标对象的属性值
-         * @example
-         * { foo: 1 }  target = { foo: 1 }  key = 'foo'  value = 2
-         */
-        set(target, key, value) {
-            // Reflect.set() 方法基本等同于 target[key] = value， 用于设置对象的属性值
-            const res = Reflect.set(target, key, value)
+    return createActiveObject(target, mutableHandlers)
+}
 
-            // 触发依赖: 在数据变化时重新执行副作用函数
-            trigger(target, key)
-            return res
-        }
-    })
+export function readonly(target) {
+    return createActiveObject(target, readonlyHandlers)
+}
+
+export function isReactive(target) {
+    // 判断是否是响应式数据
+    return !!target[ReactiveFlags.IS_REACTIVE]
+}
+
+export function isReadonly(target) {
+    // 判断是否是只读数据
+    return !!target[ReactiveFlags.IS_READONLY]
+}
+
+export function shallowReadonly(target) {
+    return createActiveObject(target, shallowReadonlyHandlers)
+}
+
+function createActiveObject(target, baseHandlers) {
+    return new Proxy(target, baseHandlers)
 }

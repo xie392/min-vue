@@ -1,7 +1,13 @@
+import { extend } from '../shared'
+
+let activeEffect: ReactiveEffect
+let shouldTrack: boolean
+
 class ReactiveEffect {
-    private _fn: Function
-    public deps: any[] = []
-    private active = true
+    _fn: Function
+    deps: any[] = []
+    active = true
+    onStop?: () => void
 
     constructor(
         fn: Function,
@@ -11,13 +17,26 @@ class ReactiveEffect {
     }
 
     run() {
+        if (!this.active) {
+            return this._fn()
+        }
+        // shouldTrack 用于控制是否收集依赖
+        shouldTrack = true
         activeEffect = this
-        return this._fn()
+
+        const result = this._fn()
+
+        shouldTrack = false
+
+        return result
     }
 
     stop() {
         if (this.active) {
             clearEffect(this)
+            if (this.onStop) {
+                this.onStop()
+            }
             this.active = false
         }
     }
@@ -27,6 +46,11 @@ function clearEffect(effect) {
     effect.deps.forEach((dep: any) => {
         dep.delete(effect)
     })
+    effect.deps.length = 0
+}
+
+function isTracking() {
+    return shouldTrack && activeEffect !== undefined
 }
 
 /**
@@ -38,6 +62,7 @@ function clearEffect(effect) {
  */
 const targetMap = new Map()
 export function track(target, key) {
+    if (!isTracking()) return
     // 获取副作用函数
     let depsMap = targetMap.get(target)
 
@@ -58,10 +83,15 @@ export function track(target, key) {
         depsMap.set(key, dep)
     }
 
-    dep.add(activeEffect)
-    activeEffect?.deps?.push(dep)
-}
+    // 如果依赖中已经有了副作用函数，就不再重复收集
+    if (dep.has(activeEffect)) return
 
+    // 将副作用函数和响应式数据关联起来
+    dep.add(activeEffect)
+
+    // 将响应式数据和副作用函数关联起来
+    activeEffect.deps.push(dep)
+}
 
 /**
  * 用于触发依赖
@@ -91,14 +121,19 @@ export function trigger(target, key) {
  * 当依赖变化时，会重新执行这个副作用函数。
  * @param fn   副作用函数
  */
-let activeEffect
 export function effect(fn, options: any = {}) {
+    // 创建副作用函数
     const _effect = new ReactiveEffect(fn, options.scheduler)
 
+    extend(_effect, options)
+
+    // 执行副作用函数
     _effect.run()
 
+    // 返回一个函数，用于停止副作用函数的执行
     const runner: any = _effect.run.bind(_effect)
 
+    // 将副作用函数挂载到 runner 上
     runner.effect = _effect
 
     return runner

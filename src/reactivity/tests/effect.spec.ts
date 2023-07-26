@@ -81,11 +81,31 @@ describe('effect', () => {
         // 停止副作用函数的执行
         stop(runner)
 
+        obj.prop++
+
         // 停止执行后，再次修改响应式数据，dummy 的值不会改变
         obj.prop = 3
         expect(dummy).toBe(2)
 
         runner()
         expect(dummy).toBe(3)
+    })
+
+    // onStop 参数的基本功能
+    it('onStop', () => {
+        const obj = reactive({ foo: 1 })
+        const onStop = jest.fn()
+        let dummy
+        const runner = effect(
+            () => {
+                dummy = obj.foo
+            },
+            {
+                onStop
+            }
+        )
+
+        stop(runner)
+        expect(onStop).toBeCalledTimes(1)
     })
 })
