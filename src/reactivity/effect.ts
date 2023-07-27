@@ -3,7 +3,7 @@ import { extend } from '../shared'
 let activeEffect: ReactiveEffect
 let shouldTrack: boolean
 
-class ReactiveEffect {
+export class ReactiveEffect {
     _fn: Function
     deps: any[] = []
     active = true
@@ -49,7 +49,7 @@ function clearEffect(effect) {
     effect.deps.length = 0
 }
 
-function isTracking() {
+export function isTracking() {
     return shouldTrack && activeEffect !== undefined
 }
 
@@ -83,6 +83,10 @@ export function track(target, key) {
         depsMap.set(key, dep)
     }
 
+    trackEffects(dep)
+}
+
+export function trackEffects(dep) {
     // 如果依赖中已经有了副作用函数，就不再重复收集
     if (dep.has(activeEffect)) return
 
@@ -103,7 +107,10 @@ export function track(target, key) {
 export function trigger(target, key) {
     let depsMap = targetMap.get(target)
     let dep = depsMap.get(key)
+    triggerEffects(dep)
+}
 
+export function triggerEffects(dep) {
     for (const effect of dep) {
         if (effect.scheduler) {
             effect.scheduler()

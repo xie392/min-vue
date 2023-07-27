@@ -1,4 +1,4 @@
-import { reactive, isReactive, isReadonly, readonly } from '../reactive'
+import { reactive, isReactive, isReadonly, readonly,isProxy } from '../reactive'
 
 describe('reactive', () => {
     // 响应式对象
@@ -15,6 +15,8 @@ describe('reactive', () => {
 
         expect(isReactive(observed)).toBe(true)
         expect(isReactive(original)).toBe(false)
+
+        expect(isProxy(observed)).toBe(true)
     })
 
     // 嵌套响应式
