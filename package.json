@@ -9,7 +9,8 @@
     "test": "jest",
     "lint": "eslint --ext .ts,.js src",
     "format": "prettier --write src/**/*.{ts,js}",
-    "build": "rollup -c rollup.config.js"
+    "build": "rollup -c rollup.config.js",
+    "build:dev": "rollup -c rollup.config.js --watch"
   },
   "keywords": [],
   "author": "",
