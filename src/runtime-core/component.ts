@@ -1,43 +1,47 @@
-import { PublicInstanceProxyHandlers } from "./componentPubliclinst"
+import { shallowReadonly } from '../reactivity/reactive'
+import { PublicInstanceProxyHandlers } from './componentPubliclinst'
+import { emit } from './componetEmit'
+import { initProps } from './componetProps'
 
 export function createComponentInstance(vnode) {
-    // console.log('createComponentInstance', vnode)
-
     const instance = {
         type: vnode.type,
         props: vnode.props,
         vnode,
         render: vnode.type.render,
-        setupState: vnode.type.setup(),
-        isMounted: false
+        setupState: {},
+        emit: () => {}
     }
 
-    console.log('createComponentInstance', instance)
+    instance.emit = emit as any
 
     return instance
 }
 
 export function setupComponent(instance) {
-    // TODO
-    // initProps()
+    // 处理 props
+    initProps(instance, instance.props)
     // initSlots()
-
     setupStatefulComponent(instance)
 }
 
 function setupStatefulComponent(instance) {
     const Component = instance.vnode.type
-
+    // 给组件实例添加代理
     instance.proxy = new Proxy({ _: instance }, PublicInstanceProxyHandlers)
 
     const { setup } = Component
 
     if (setup) {
-        const setupResult = setup()
-
+        // setup中的 props 不可修改
+        const setupResult = setup(shallowReadonly(instance.props), {
+            emit: instance.emit
+        })
+        instance.setupState = setupResult
         handleSetupResult(instance, setupResult)
     }
 }
+
 function handleSetupResult(instance, setupResult) {
     if (typeof setupResult === 'function') {
         // setup返回的是render函数

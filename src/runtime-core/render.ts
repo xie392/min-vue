@@ -47,7 +47,7 @@ function processComponent(vnode, container) {
 function mountComponent(vnode, container) {
     // 组件挂载逻辑
     const instance = createComponentInstance(vnode)
-
+    // debugger
     // 组件的setup方法
     setupComponent(instance)
 
@@ -55,6 +55,12 @@ function mountComponent(vnode, container) {
     setupRenderEffect(instance, vnode, container)
 }
 
+/**
+ * 设置组件副作用
+ * @param instance  组件实例
+ * @param vnode     虚拟节点
+ * @param container   容器
+ */
 function setupRenderEffect(instance, vnode, container) {
     const { proxy } = instance
     const subTree = instance.render.call(proxy)
@@ -62,25 +68,42 @@ function setupRenderEffect(instance, vnode, container) {
     vnode.el = subTree.el
 }
 
+/**
+ * 处理元素 
+ * @param vnode         虚拟节点
+ * @param container     容器
+ */
 function processElement(vnode, container) {
     mountElement(vnode, container)
 }
 
+/**
+ * 挂载元素
+ * @param vnode         虚拟节点
+ * @param container     容器
+ */
 function mountElement(vnode, container) {
     const el = (vnode.el = document.createElement(vnode.type))
 
-    const { props, children, ShapeFlag } = vnode
+    const { props, children, shapeFlag } = vnode
 
-    if (ShapeFlag & ShapeFlags.TEXT_CHILDREN) {
+    if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
         el.textContent = children
-    } else if (ShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+    } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
         mountChildren(children, el)
     }
 
     // 处理props
     for (const key in props) {
         const val = props[key]
-        el.setAttribute(key, val)
+        const isOn = (key) => /^on[A-Z]/.test(key)
+        // 事件
+        if (isOn(key)) {
+            const event = key.slice(2).toLowerCase()
+            el.addEventListener(event, val)
+        } else {
+            el.setAttribute(key, val)
+        }
     }
 
     container.appendChild(el)

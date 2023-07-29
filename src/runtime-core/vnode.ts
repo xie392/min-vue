@@ -9,12 +9,12 @@ import { ShapeFlags } from '../shared/ShapeFlags'
  */
 export function createVNode(type, props?, children?) {
     const vnode = {
-        type,
-        props,
-        children,
-        shapeFlag: getShapeFlags(type),
-        el: null
-    }
+        type,                           // 节点类型
+        props,                          // 节点属性
+        children,                       // 子节点
+        shapeFlag: getShapeFlags(type),     // 节点类型
+        el: null                        // 真实节点
+    } 
 
     if(typeof children === 'string') {
         vnode.shapeFlag |= ShapeFlags.TEXT_CHILDREN

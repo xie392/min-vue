@@ -1,3 +1,4 @@
+import { isObject } from '../shared/index'
 import { mutableHandlers, readonlyHandlers, shallowReadonlyHandlers } from './baerHandler'
 
 export enum ReactiveFlags {
@@ -29,6 +30,9 @@ export function isProxy(target) {
 }
 
 export function shallowReadonly(target) {
+    // if (isObject(target)) {
+    //     console.warn(`value cannot be made reactive: ${String(target)}`);
+    // }
     return createActiveObject(target, shallowReadonlyHandlers)
 }
 
