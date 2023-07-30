@@ -33,8 +33,11 @@ export default {
             [
                 h(Foo, {
                     msg: 'App msg',
-                    onAdd: () => {
-                        console.log('App onAdd')
+                    onAdd: (a, b) => {
+                        console.log('App onAdd', a, b)
+                    },
+                    onAddFoo: (a, b) => {
+                        console.log('App onaddFoo', a, b)
                     }
                 }),
                 h('p', {}, 'App  ' + this.msg)

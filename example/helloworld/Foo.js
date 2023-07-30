@@ -7,7 +7,8 @@ export default {
         
         const add = () => {
             console.log('Foo add')
-            emit('add')
+            emit('add',1,2)
+            emit('add-foo',4,5)
         }
 
         return {
