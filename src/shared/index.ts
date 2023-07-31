@@ -17,7 +17,7 @@ export function isObject(val) {
  */
 export const hasChanged = (oldValue, newValue) => !Object.is(oldValue, newValue)
 
-export const hasOwn = (val, key) => Object.prototype.hasOwnProperty.call(val, key)
+export const hasOwn = (val, key) => Object.prototype.hasOwnProperty.call(val, key) 
 
 export const camelized = (str: string) => {
     return str.replace(/-(\w)/g, (_, c) => (c ? c.toUpperCase() : ''))
@@ -30,3 +30,6 @@ export const capitalized = (str: string) => {
 export const toHandlerKey = (str: string) => {
     return str ? `on${capitalized(str)}` : ''
 }
+
+
+export const isArray = Array.isArray

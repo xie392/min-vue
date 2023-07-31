@@ -1,5 +1,6 @@
 import { ShapeFlags } from '../shared/ShapeFlags'
 import { createComponentInstance, setupComponent } from './component'
+import { Fragment, Text } from './vnode'
 
 /**
  * 渲染函数
@@ -19,14 +20,23 @@ export function render(vnode, container) {
  * @param container     容器
  */
 function patch(vnode, container) {
-    const { shapeFlag } = vnode
+    const { type, shapeFlag } = vnode
 
-    // 判断是不是 element 元素
-    if (shapeFlag & ShapeFlags.ELEMENT) {
-        processElement(vnode, container)
-    } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
-        // 组件
-        processComponent(vnode, container)
+    switch (type) {
+        case Fragment:
+            processFragment(vnode, container)
+            break
+        case Text:
+            processText(vnode, container)
+            break
+        default:
+            // 判断是不是 element 元素
+            if (shapeFlag & ShapeFlags.ELEMENT) {
+                processElement(vnode, container)
+            } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
+                // 组件
+                processComponent(vnode, container)
+            }
     }
 }
 
@@ -69,7 +79,7 @@ function setupRenderEffect(instance, vnode, container) {
 }
 
 /**
- * 处理元素 
+ * 处理元素
  * @param vnode         虚拟节点
  * @param container     容器
  */
@@ -113,4 +123,12 @@ function mountChildren(children, container) {
     children.forEach((child) => {
         patch(child, container)
     })
+}
+function processFragment(vnode: any, container: any) {
+    mountChildren(vnode.children, container)
+}
+function processText(vnode: any, container: any) {
+    const { children } = vnode
+    const textNode = (vnode.el = document.createTextNode(children))
+    container.appendChild(textNode)
 }

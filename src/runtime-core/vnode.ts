@@ -1,5 +1,8 @@
 import { ShapeFlags } from '../shared/ShapeFlags'
 
+export const Fragment = Symbol('Fragment')
+export const Text = Symbol('Text')
+
 /**
  * 创建虚拟节点
  * @param type          节点类型
@@ -8,6 +11,7 @@ import { ShapeFlags } from '../shared/ShapeFlags'
  * @returns             虚拟节点
  */
 export function createVNode(type, props?, children?) {
+    
     const vnode = {
         type,                           // 节点类型
         props,                          // 节点属性
@@ -22,6 +26,13 @@ export function createVNode(type, props?, children?) {
         vnode.shapeFlag |= ShapeFlags.ARRAY_CHILDREN
     }
 
+    if(vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
+        if(typeof children === 'object') {
+            vnode.shapeFlag |= ShapeFlags.SLOTS_CHILDREN
+        }
+        
+    }
+
     return vnode
 }
 
@@ -29,3 +40,7 @@ function getShapeFlags(type) {
     return typeof type === 'string' ? ShapeFlags.ELEMENT : ShapeFlags.STATEFUL_COMPONENT
 }
 
+
+export function createTextVNode(text) {
+    return createVNode(Text, null, text)
+}
