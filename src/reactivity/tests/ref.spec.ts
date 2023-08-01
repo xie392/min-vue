@@ -69,5 +69,7 @@ describe('ref', () => {
         porxyUser.age = ref(30)
         expect(porxyUser.age).toBe(30)
         expect(user.age.value).toBe(30)
+
+        
     })
 })
