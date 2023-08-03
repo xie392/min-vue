@@ -14,8 +14,14 @@ const App = {
         }
     },
     render() {
-        console.log('count: ', this.add)
-        return h('div', null, [h('p', null, 'count: ' + this.count), h('button', { onClick: this.add }, 'add')])
+        const foo = h(Foo, { foo: this.count }, null)
+        return h('div', null, [h('p', null, 'count: ' + this.count), h('button', { onClick: this.add }, 'add'), foo])
+    }
+}
+
+const Foo = {
+    render() {
+        return h('p', { id: `id-${this.foo}` }, 'foo ->' + this.foo)
     }
 }
 

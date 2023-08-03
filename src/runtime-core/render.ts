@@ -1,11 +1,18 @@
 import { effect } from '../reactivity/effect'
+import { EMPTY_OBJ } from '../shared'
 import { ShapeFlags } from '../shared/ShapeFlags'
 import { createComponentInstance, setupComponent } from './component'
 import { createAppAPI } from './createApp'
 import { Fragment, Text } from './vnode'
 
 export function createReander(options) {
-    const { createElement: hostCreateElement, insert: hostInsert, patchProps: hostPatchProps } = options
+    const {
+        createElement: hostCreateElement,
+        insert: hostInsert,
+        patchProps: hostPatchProps,
+        remove: hostRemove,
+        setElement:hostSetElementText
+    } = options
 
     /**
      * 渲染函数
@@ -111,7 +118,56 @@ export function createReander(options) {
     }
 
     function patchElement(n1, n2, container) {
-        console.log('patchElement', n1, n2, container)
+        // console.log('patchElement', n1, n2, container)
+        const oldProps = (n1 && n1.props) || EMPTY_OBJ
+        const newProps = n2.props || EMPTY_OBJ
+
+        const el = (n2.el = n1.el)
+
+        // 处理children
+        patchChildren(n1, n2, el)
+
+        // 处理props
+        patchProps(el, oldProps, newProps)
+    }
+
+    function patchChildren(n1, n2, el) {
+        const { shapeFlag: prevShapeFlag, children: c1 } = n1
+        const { shapeFlag, children: c2 } = n2
+
+        if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
+            if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+                umMountChildren(c1)
+                // 设置文本
+                hostSetElementText(el, c2)
+            }
+        }
+    }
+
+    function umMountChildren(children) {
+        children.forEach((child) => {
+            child.el && hostRemove(child.el, null)
+        })
+    }
+
+    function patchProps(el, oldProps, newProps) {
+        if (oldProps === newProps) return
+        for (const key in newProps) {
+            const prev = oldProps[key]
+            const next = newProps[key]
+
+            if (prev !== next) {
+                hostPatchProps(el, key, prev, next)
+            }
+        }
+
+        if (oldProps === EMPTY_OBJ) return
+
+        for (const key in oldProps) {
+            if (!(key in newProps)) {
+                hostPatchProps(el, key, oldProps[key], null)
+            }
+        }
     }
 
     /**
@@ -141,7 +197,7 @@ export function createReander(options) {
             // } else {
             //     el.setAttribute(key, val)
             // }
-            hostPatchProps(el, key, val)
+            hostPatchProps(el, key, null, val)
         }
 
         // container.appendChild(el)

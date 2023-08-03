@@ -4,14 +4,18 @@ function createElement(type) {
     return document.createElement(type)
 }
 
-function patchProps(el, key, val) {
+function patchProps(el, key, prevVal, nextVal) {
     const isOn = (key) => /^on[A-Z]/.test(key)
     // 事件
     if (isOn(key)) {
         const event = key.slice(2).toLowerCase()
-        el.addEventListener(event, val)
+        el.addEventListener(event, nextVal)
     } else {
-        el.setAttribute(key, val)
+        if (nextVal == null || nextVal == undefined) {
+            el.removeAttribute(key)
+        } else {
+            el.setAttribute(key, nextVal)
+        }
     }
 }
 
@@ -19,10 +23,23 @@ function insert(el, parent) {
     parent.appendChild(el)
 }
 
+function remove(el) {
+    const parent = el.parentNode
+    if (parent) {
+        parent.removeChild(el)
+    }
+}
+
+function setElement(el,text) {
+    el.textContent = text
+}
+
 const render: any = createReander({
     createElement,
     patchProps,
-    insert
+    insert,
+    remove,
+    setElement
 })
 
 export function createApp(...args) {

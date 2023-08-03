@@ -1,5 +1,7 @@
 export const extend = Object.assign
 
+export const EMPTY_OBJ = {}
+
 /**
  * 判断是否是对象
  * @param val
