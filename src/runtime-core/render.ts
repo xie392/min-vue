@@ -11,7 +11,7 @@ export function createReander(options) {
         insert: hostInsert,
         patchProps: hostPatchProps,
         remove: hostRemove,
-        setElement:hostSetElementText
+        setElement: hostSetElementText
     } = options
 
     /**
@@ -113,33 +113,84 @@ export function createReander(options) {
         if (!n1) {
             mountElement(n2, container, parentComponent)
         } else {
-            patchElement(n1, n2, container)
+            patchElement(n1, n2, container, parentComponent)
         }
     }
 
-    function patchElement(n1, n2, container) {
-        // console.log('patchElement', n1, n2, container)
+    function patchElement(n1, n2, container, parentComponent) {
         const oldProps = (n1 && n1.props) || EMPTY_OBJ
         const newProps = n2.props || EMPTY_OBJ
 
         const el = (n2.el = n1.el)
-
         // 处理children
-        patchChildren(n1, n2, el)
+        patchChildren(n1, n2, el, parentComponent)
 
         // 处理props
         patchProps(el, oldProps, newProps)
     }
 
-    function patchChildren(n1, n2, el) {
+    function patchChildren(n1, n2, el, parentComponent) {
         const { shapeFlag: prevShapeFlag, children: c1 } = n1
         const { shapeFlag, children: c2 } = n2
 
         if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
             if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
                 umMountChildren(c1)
-                // 设置文本
+            }
+            if (c1 !== c2) {
                 hostSetElementText(el, c2)
+            }
+        } else {
+            if (prevShapeFlag & ShapeFlags.TEXT_CHILDREN) {
+                hostSetElementText(el, '')
+                mountChildren(c2, el, parentComponent)
+            } else {
+                patchKeyedChildren(c1, c2, el, parentComponent)
+            }
+        }
+    }
+
+    function isSameVNodeType(n1, n2) {
+        return n1.type === n2.type && n1.key === n2.key
+    }
+
+    // diff 算法
+    function patchKeyedChildren(c1, c2, el, parentComponent) {
+        let i = 0
+        let e1 = c1.length - 1
+        let e2 = c2.length - 1
+
+        // 左侧对比
+        while (i <= e1 && i <= e2) {
+            const n1 = c1[i]
+            const n2 = c2[i]
+
+            if (isSameVNodeType(n1, n2)) {
+                patch(n1, n2, el, parentComponent)
+            } else {
+                break
+            }
+            i++
+        }
+
+        // 右侧对比
+        while (i <= e1 && i <= e2) {
+            const n1 = c1[e1]
+            const n2 = c2[e2]
+
+            if (isSameVNodeType(n1, n2)) {
+                patch(n1, n2, el, parentComponent)
+            } else {
+                break
+            }
+            e1--
+            e2--
+        }
+
+        // 1. 旧的比新的多，需要删除
+        if (i > e1) {
+            if (i <= e2) {
+                patch(null, c2[i], el, parentComponent)
             }
         }
     }
@@ -150,6 +201,7 @@ export function createReander(options) {
         })
     }
 
+    // 处理props
     function patchProps(el, oldProps, newProps) {
         if (oldProps === newProps) return
         for (const key in newProps) {

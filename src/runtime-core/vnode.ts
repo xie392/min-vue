@@ -11,26 +11,25 @@ export const Text = Symbol('Text')
  * @returns             虚拟节点
  */
 export function createVNode(type, props?, children?) {
-    
     const vnode = {
-        type,                           // 节点类型
-        props,                          // 节点属性
-        children,                       // 子节点
-        shapeFlag: getShapeFlags(type),     // 节点类型
-        el: null                        // 真实节点
-    } 
+        type, // 节点类型
+        props, // 节点属性
+        children, // 子节点
+        shapeFlag: getShapeFlags(type), // 节点类型
+        el: null, // 真实节点
+        key: props && props.key ? props.key : null
+    }
 
-    if(typeof children === 'string') {
+    if (typeof children === 'string') {
         vnode.shapeFlag |= ShapeFlags.TEXT_CHILDREN
-    } else if(Array.isArray(children)) {
+    } else if (Array.isArray(children)) {
         vnode.shapeFlag |= ShapeFlags.ARRAY_CHILDREN
     }
 
-    if(vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
-        if(typeof children === 'object') {
+    if (vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
+        if (typeof children === 'object') {
             vnode.shapeFlag |= ShapeFlags.SLOTS_CHILDREN
         }
-        
     }
 
     return vnode
@@ -39,7 +38,6 @@ export function createVNode(type, props?, children?) {
 function getShapeFlags(type) {
     return typeof type === 'string' ? ShapeFlags.ELEMENT : ShapeFlags.STATEFUL_COMPONENT
 }
-
 
 export function createTextVNode(text) {
     return createVNode(Text, null, text)
