@@ -190,7 +190,50 @@ export function createReander(options) {
         // 1. 旧的比新的多，需要删除
         if (i > e1) {
             if (i <= e2) {
-                patch(null, c2[i], el, parentComponent)
+                const nextPos = e2 + 1
+                const anchor = nextPos < c2.length ? c2[nextPos].el : null
+
+                while (i <= e2) {
+                    patch(null, c2[i], el, parentComponent)
+                    i++
+                }
+            } else if (i > e2) {
+                while (i <= e1) {
+                    hostRemove(c1[i].el)
+                    i++
+                }
+            } else {
+                let s1 = i
+                let s2 = i
+                const keyToNewIndexMap = new Map()
+
+                for (let i = s1; i <= e2; i++) {
+                    const nextChild = c2[i]
+                    keyToNewIndexMap.set(nextChild.key, i)
+                }
+
+                for (let i = s1; i <= e1; i++) {
+                    const prevChild = c1[i]
+                    let newIndex = 0
+
+                    if (prevChild === null) {
+                        newIndex = keyToNewIndexMap.get(prevChild.key)
+                    } else {
+                        for (let j = s2; j <= e2; j++) {
+                            if (isSameVNodeType(prevChild, c2[j])) {
+                                newIndex = j
+                                break
+                            }
+                        }
+                    }
+
+                    if (newIndex === undefined) {
+                        hostRemove(prevChild.el)
+                    } else {
+                        patch(prevChild, c2[newIndex], el, parentComponent)
+                        c2[newIndex] = null
+                    }
+                }
             }
         }
     }
